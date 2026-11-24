@@ -31,7 +31,7 @@ La ruta `/finanzas-personales/` del comando de compilación corresponde al nombr
 
 Los datos se guardan localmente, sin cuenta ni sincronización. Cada dispositivo y navegador tiene sus propios datos. Al borrar los datos del navegador o desinstalar la aplicación, podrías perderlos.
 
-En Opciones > Copia de seguridad puedes copiar todos los datos como texto y pegarlos en un archivo o lugar privado. Para restaurarlos, pega ese texto en «Restaurar»: la copia reemplaza los datos existentes. El portapapeles y el archivo de copia contienen información financiera, así que guárdalos con cuidado. En la web, copiar al portapapeles requiere un contexto seguro (HTTPS o localhost) y permiso del navegador.
+En Opciones > Copia de seguridad, selecciona «Guardar archivo» para guardar una copia `.txt`. En la web, el navegador inicia una descarga; en Android e iOS puedes seleccionar dónde guardarla. Para restaurarla, selecciona «Restaurar > Elegir archivo» y escoge la copia. También puedes seguir copiando y pegando el texto. Restaurar reemplaza todos los datos existentes, previa confirmación. El archivo y el portapapeles contienen información financiera: guárdalos en un lugar privado. En la web, copiar al portapapeles requiere HTTPS o localhost y permiso del navegador.
 
 ## Validación
 

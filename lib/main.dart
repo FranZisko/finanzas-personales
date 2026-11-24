@@ -1,3 +1,7 @@
+import 'dart:convert';
+
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -300,11 +304,17 @@ class _FinanceHomeState extends State<FinanceHome> {
       builder: (context) => AlertDialog(
         title: const Text('Copia de seguridad'),
         content: const Text(
-          'Copia tus datos como texto y guárdalos en un lugar privado. '
-          'Puedes pegarlos después para restaurarlos en este u otro dispositivo. '
-          'El texto contiene toda tu información financiera.',
+          'Guarda un archivo con tus datos para restaurarlos en este u otro '
+          'dispositivo. La copia contiene información financiera privada.',
         ),
         actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _exportBackupFile();
+            },
+            child: const Text('Guardar archivo'),
+          ),
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('Cerrar'),
@@ -325,13 +335,88 @@ class _FinanceHomeState extends State<FinanceHome> {
           FilledButton(
             onPressed: () {
               Navigator.pop(context);
-              _importBackup();
+              _chooseRestore();
             },
             child: const Text('Restaurar'),
           ),
         ],
       ),
     );
+  }
+
+  Future<void> _exportBackupFile() async {
+    try {
+      final result = await FilePicker.saveFile(
+        dialogTitle: 'Guardar copia de seguridad',
+        fileName: 'mis-finanzas.txt',
+        bytes: utf8.encode(data!.export()),
+        mimeType: 'text/plain',
+      );
+      if (!mounted) return;
+      if (kIsWeb) {
+        _message(
+          'Se solicitó la descarga. Revisa las descargas del navegador.',
+        );
+      } else if (result != null) {
+        _message('Copia de seguridad guardada.');
+      }
+    } catch (error) {
+      if (mounted) _message('No se pudo guardar la copia: $error');
+    }
+  }
+
+  Future<void> _chooseRestore() async {
+    await showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Restaurar copia'),
+        content: const Text(
+          'Selecciona un archivo de copia o pega su contenido.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _importBackup();
+            },
+            child: const Text('Pegar texto'),
+          ),
+          FilledButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _importBackupFile();
+            },
+            child: const Text('Elegir archivo'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _importBackupFile() async {
+    String text;
+    try {
+      final file = await FilePicker.pickFile(
+        dialogTitle: 'Seleccionar copia de seguridad',
+        type: FileType.custom,
+        allowedExtensions: ['txt', 'json'],
+      );
+      if (file == null || !mounted) return;
+      text = utf8.decode(await file.readAsBytes());
+    } on FormatException catch (error) {
+      if (mounted) {
+        _message('El archivo no contiene texto UTF-8 válido: ${error.message}');
+      }
+      return;
+    } catch (error) {
+      if (mounted) _message('No se pudo leer el archivo: $error');
+      return;
+    }
+    if (mounted) await _restoreText(text);
   }
 
   Future<void> _importBackup() async {
@@ -367,6 +452,10 @@ class _FinanceHomeState extends State<FinanceHome> {
     final text = await route.completed;
     controller.dispose();
     if (text == null || !mounted) return;
+    await _restoreText(text);
+  }
+
+  Future<void> _restoreText(String text) async {
     late final FinanceData imported;
     try {
       imported = FinanceData.import(text);
@@ -433,7 +522,7 @@ class _FinanceHomeState extends State<FinanceHome> {
                             child: const Text('Reintentar'),
                           ),
                           TextButton(
-                            onPressed: _importBackup,
+                            onPressed: _chooseRestore,
                             child: const Text('Restaurar una copia'),
                           ),
                         ],
